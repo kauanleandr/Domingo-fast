@@ -12,7 +12,7 @@ Diosne Marlon Furtado dos Santos
 
 Kauan Leandro Gonçalves de Araujo Moreira
 
-acesse o site em: https://faastfood.netlify.app/
+acesse o site em: https://domingofast.netlify.app/
 
 ---
 
@@ -44,4 +44,5 @@ acesse o site em: https://faastfood.netlify.app/
    - Selecione a opção **"Open with Live Server"**.
 
 3. **Visualize o Site no Navegador** 🌐:  
+
    - O site será aberto automaticamente no seu navegador. Pronto para usar! 🎉
