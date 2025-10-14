@@ -419,6 +419,7 @@
           margin-bottom: 1.5rem;
         }
         
+        /* Ajusta o layout para colunas em telas menores */
         .row.row-cols-sm-2 > .col {
             flex-basis: 50%;
             max-width: 50%;
@@ -435,7 +436,16 @@
         .card-produto .card-body {
           padding: 0.75rem;
         }
-
+        
+        .card-produto .card-body h3,
+        .card-produto .card-body p {
+          white-space: normal;
+          text-align: center;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          word-wrap: break-word;
+        }
+        
         .card-produto h3 {
           font-size: 0.9rem;
           margin-bottom: 0.25rem;
@@ -445,26 +455,39 @@
           font-size: 0.75rem;
           margin-bottom: 0.5rem;
         }
-
+        
+        /* CÓDIGO MODIFICADO AQUI */
+        .card-produto .d-flex.align-items-center.justify-content-between {
+          flex-direction: column; /* Muda a direção do Flexbox para empilhar */
+          align-items: center; /* Centraliza os itens na coluna */
+          gap: 0.5rem; /* Adiciona espaçamento entre os itens */
+        }
+        
         .preco {
           font-size: 0.9rem;
+          flex-shrink: 0;
+          margin-bottom: 0.25rem; /* Adiciona uma pequena margem para separar do botão */
         }
 
         .btn-add {
           padding: 0.4rem 0.6rem;
           font-size: 0.7rem;
           gap: 0.25rem;
+          width: 100%; /* Faz o botão ocupar 100% da largura */
+          text-align: center;
+          white-space: nowrap;
+          justify-content: center;
         }
         
         /* NOVO CSS PARA O BOTÃO DO CARRINHO MOBILE */
         .btn-cart-mobile {
-            padding: 0.6rem !important; /* Diminui o padding do botão */
-            font-size: 1rem !important; /* Diminui o tamanho do ícone */
+            padding: 0.6rem !important;
+            font-size: 1rem !important;
         }
         
         .btn-cart-mobile .badge {
-            font-size: 0.7rem; /* Diminui o tamanho da fonte do badge */
-            padding: 0.35em 0.5em; /* Ajusta o padding do badge */
+            font-size: 0.7rem;
+            padding: 0.35em 0.5em;
         }
       }
 

@@ -169,8 +169,8 @@ function mostrarNotificacao(mensagem, tipo = 'info') {
 
   setTimeout(() => {
     toast.style.animation = 'slideOut 0.3s ease';
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+    setTimeout(() => toast.remove(), 100);
+  }, 800);
 }
 
 // Função para gerar mensagem do WhatsApp
