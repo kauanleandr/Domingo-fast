@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta name="description" content="Fastfood de comidas caseiras e café da manhã – layout com produto em destaque e lista de itens." />
     <meta name="author" content="" />
-    <title>Domingo Fast • Caseiros & Café</title>
+    <title>Domingo Fast</title>
 
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
 
@@ -455,6 +455,17 @@
           font-size: 0.7rem;
           gap: 0.25rem;
         }
+        
+        /* NOVO CSS PARA O BOTÃO DO CARRINHO MOBILE */
+        .btn-cart-mobile {
+            padding: 0.6rem !important; /* Diminui o padding do botão */
+            font-size: 1rem !important; /* Diminui o tamanho do ícone */
+        }
+        
+        .btn-cart-mobile .badge {
+            font-size: 0.7rem; /* Diminui o tamanho da fonte do badge */
+            padding: 0.35em 0.5em; /* Ajusta o padding do badge */
+        }
       }
 
       /* Animações suaves */
@@ -510,9 +521,16 @@
         <a class="navbar-brand" href="#">
           <i class="bi bi-egg-fried me-2 brand-acento"></i> Domingo <span class="brand-acento">Fast</span>
         </a>
+        
+        <button class="btn btn-cart btn-cart-mobile d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#carrinhoOffcanvas">
+            <i class="bi bi-bag"></i> 
+            <span id="itemCountMobile" class="badge ms-2">0</span>
+        </button>
+        
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navPrincipal">
           <span class="navbar-toggler-icon"></span>
         </button>
+        
         <div class="collapse navbar-collapse" id="navPrincipal">
           <ul class="navbar-nav ms-auto me-4">
             <li class="nav-item"><a class="nav-link" href="#inicio">Início</a></li>
@@ -520,9 +538,10 @@
             <li class="nav-item"><a class="nav-link" href="#caseiros">Comidas Caseiras</a></li>
             <li class="nav-item"><a class="nav-link" href="#contato">Contato</a></li>
           </ul>
-          <button class="btn btn-cart" data-bs-toggle="offcanvas" data-bs-target="#carrinhoOffcanvas">
+          
+          <button class="btn btn-cart d-none d-lg-block" data-bs-toggle="offcanvas" data-bs-target="#carrinhoOffcanvas">
             <i class="bi bi-bag me-2"></i> Meu Pedido
-            <span id="itemCount" class="badge ms-2">0</span>
+            <span id="itemCountDesktop" class="badge ms-2">0</span>
           </button>
         </div>
       </div>

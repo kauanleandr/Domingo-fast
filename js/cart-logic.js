@@ -8,19 +8,33 @@ function formatarPreco(valor) {
 
 // Função para extrair preço do texto (lida com promoções)
 function extrairPreco(precoTexto) {
-  // Remove "R$" e espaços, pega o último valor (caso tenha promoção)
-  const matches = precoTexto.match(/R\$\s*([\d,]+)/g);
+  // Pega todos os valores numéricos do texto
+  const matches = precoTexto.match(/[\d,]+(?=\s*$)/);
   if (matches && matches.length > 0) {
-    const ultimoPreco = matches[matches.length - 1];
-    return parseFloat(ultimoPreco.replace('R$', '').replace(',', '.').trim());
+    // Retorna o último valor encontrado, convertido para float
+    return parseFloat(matches[0].replace(',', '.'));
   }
   return 0;
+}
+
+// Carregar carrinho do localStorage ao iniciar
+function carregarCarrinho() {
+    const carrinhoSalvo = localStorage.getItem('carrinho');
+    if (carrinhoSalvo) {
+        window.carrinho = JSON.parse(carrinhoSalvo);
+    }
+}
+
+// Salvar carrinho no localStorage
+function salvarCarrinho() {
+    localStorage.setItem('carrinho', JSON.stringify(window.carrinho));
 }
 
 // Atualizar interface do carrinho
 window.atualizarCarrinho = function() {
   const carrinhoDiv = document.getElementById('carrinhoProdutos');
-  const itemCount = document.getElementById('itemCount');
+  const itemCountDesktop = document.getElementById('itemCountDesktop');
+  const itemCountMobile = document.getElementById('itemCountMobile');
   const totalPreco = document.getElementById('totalPreco');
   const continuarBtn = document.getElementById('continuarPedido');
 
@@ -74,12 +88,17 @@ window.atualizarCarrinho = function() {
     });
   }
 
-  if (itemCount) itemCount.textContent = window.carrinho.reduce((sum, item) => sum + item.quantidade, 0);
+  const totalItens = window.carrinho.reduce((sum, item) => sum + item.quantidade, 0);
+  if (itemCountDesktop) itemCountDesktop.textContent = totalItens;
+  if (itemCountMobile) itemCountMobile.textContent = totalItens;
+
   totalPreco.textContent = formatarPreco(total);
   
   if (continuarBtn) {
     continuarBtn.disabled = window.carrinho.length === 0;
   }
+  
+  salvarCarrinho();
 };
 
 // Adicionar produto ao carrinho
@@ -127,7 +146,6 @@ window.removerProduto = function(index) {
 
 // Mostrar notificação
 function mostrarNotificacao(mensagem, tipo = 'info') {
-  // Remove notificação existente
   const existente = document.querySelector('.toast-notification');
   if (existente) existente.remove();
 
@@ -222,6 +240,9 @@ function validarFormulario() {
 
 // Configurar eventos quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', () => {
+  // Carregar o carrinho ao carregar a página
+  carregarCarrinho();
+  
   // Configurar botões dos produtos
   document.querySelectorAll('.btn-add').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -234,6 +255,18 @@ document.addEventListener('DOMContentLoaded', () => {
       window.adicionarProduto(nome, preco);
     });
   });
+  
+  // Configurar botão de oferta principal
+  const btnAddHero = document.querySelector('.btn-add-hero');
+  if (btnAddHero) {
+    btnAddHero.addEventListener('click', () => {
+      const nome = document.querySelector('.hero-titulo').textContent;
+      const precoTexto = document.querySelector('.hero-preco').textContent;
+      const preco = extrairPreco(precoTexto);
+      
+      window.adicionarProduto(nome, preco);
+    });
+  }
 
   // Atualizar carrinho inicial
   window.atualizarCarrinho();
