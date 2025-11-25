@@ -1,5 +1,7 @@
 // Sistema de carrinho moderno e completo
 window.carrinho = [];
+const CLIENTES_KEY = 'clientesCadastrados'; // Chave para salvar os clientes
+const PEDIDOS_KEY = 'pedidosAdmin';       // Chave para salvar os pedidos admin
 
 // Função para formatar preço
 function formatarPreco(valor) {
@@ -29,6 +31,38 @@ function carregarCarrinho() {
 function salvarCarrinho() {
     localStorage.setItem('carrinho', JSON.stringify(window.carrinho));
 }
+
+// FUNÇÕES DE CADASTRO DE CLIENTE
+function getClientes() {
+    return JSON.parse(localStorage.getItem(CLIENTES_KEY) || '{}');
+}
+
+function salvarCliente(cliente) {
+    const clientes = getClientes();
+    // Usa o número de telefone limpo como chave única
+    const telefoneLimpo = cliente.telefone.replace(/\D/g, ''); 
+    
+    clientes[telefoneLimpo] = cliente;
+    localStorage.setItem(CLIENTES_KEY, JSON.stringify(clientes));
+}
+
+function carregarCliente(telefone) {
+    const clientes = getClientes();
+    const telefoneLimpo = telefone.replace(/\D/g, '');
+    return clientes[telefoneLimpo] || null;
+}
+
+// Preenche o formulário se o cliente for encontrado
+function preencherFormulario(cliente) {
+    if (cliente) {
+        document.getElementById('nomeCliente').value = cliente.nome || '';
+        document.getElementById('regiaoCliente').value = cliente.regiao || '';
+        document.getElementById('detalhesEndereco').value = cliente.detalhesEndereco || '';
+        
+        mostrarNotificacao(`Bem-vindo(a) de volta, ${cliente.nome.split(' ')[0]}! Seu cadastro foi carregado.`, 'info');
+    }
+}
+// FIM FUNÇÕES DE CADASTRO DE CLIENTE
 
 // NOVO: Função para salvar o pedido no localStorage Admin
 function salvarPedidoAdmin() {
@@ -67,9 +101,9 @@ function salvarPedidoAdmin() {
     total: total
   };
 
-  const pedidosSalvos = JSON.parse(localStorage.getItem('pedidosAdmin') || '[]');
+  const pedidosSalvos = JSON.parse(localStorage.getItem(PEDIDOS_KEY) || '[]');
   pedidosSalvos.push(pedido);
-  localStorage.setItem('pedidosAdmin', JSON.stringify(pedidosSalvos));
+  localStorage.setItem(PEDIDOS_KEY, JSON.stringify(pedidosSalvos));
 }
 
 // Atualizar interface do carrinho
@@ -297,8 +331,10 @@ function validarFormulario() {
     return false;
   }
 
-  if (telefone.length < 10) {
-    mostrarNotificacao('Por favor, insira um número de telefone válido', 'warning');
+  // Validação específica para o formato (+55) (91) 9 XXXX-XXXX
+  const telefoneLimpo = telefone.replace(/\D/g, '');
+  if (!/^(91)9\d{8}$/.test(telefoneLimpo) || telefoneLimpo.length !== 11) {
+    mostrarNotificacao('🚫 Por favor, insira um número de telefone válido do Pará: (91) 9 XXXX-XXXX.', 'danger');
     return false;
   }
 
@@ -353,20 +389,20 @@ window.attachFinalizeHandler = function() {
   const trocoDiv = document.getElementById('trocoDiv');
   const formCliente = document.getElementById('formCliente');
   const botoesCarrinho = document.getElementById('botoesCarrinho');
+  const telefoneInput = document.getElementById('telefoneCliente');
 
-  // NOVO: Botão limpar carrinho
+  // Botão limpar carrinho
   const limparTudoBtn = document.getElementById('limparTudo');
   if (limparTudoBtn) {
-    // Remover listener existente para evitar duplicação (boas práticas)
+    // Remoção de listener antigo e adição do novo (boas práticas)
     const novoLimparTudoBtn = limparTudoBtn.cloneNode(true);
     limparTudoBtn.parentNode.replaceChild(novoLimparTudoBtn, limparTudoBtn);
-    
     novoLimparTudoBtn.addEventListener('click', window.limparCarrinho);
   }
 
   if (!continuarBtn) return;
   
-  // Remover listeners existentes do continuarBtn
+  // Remoção de listener antigo e adição do novo (boas práticas)
   const novoContinuarBtn = continuarBtn.cloneNode(true);
   continuarBtn.parentNode.replaceChild(novoContinuarBtn, continuarBtn);
 
@@ -403,10 +439,19 @@ window.attachFinalizeHandler = function() {
   // Evento para finalizar pedido
   if (finalizarBtn) {
     finalizarBtn.addEventListener('click', () => {
-      // O formulário só é enviado para o WhatsApp se a validação for bem-sucedida, incluindo a checagem de endereço.
+      // 1. O formulário só é enviado/salvo se a validação for bem-sucedida.
       if (!validarFormulario()) return;
 
-      // NOVO: 1. Salva o pedido no dashboard antes de redirecionar
+      // 2. SALVA/ATUALIZA o cadastro do cliente
+      const novoCadastro = {
+          nome: document.getElementById('nomeCliente').value,
+          telefone: document.getElementById('telefoneCliente').value,
+          regiao: document.getElementById('regiaoCliente').value,
+          detalhesEndereco: document.getElementById('detalhesEndereco').value,
+      };
+      salvarCliente(novoCadastro);
+
+      // 3. Salva o pedido no dashboard
       salvarPedidoAdmin(); 
       
       const mensagem = gerarMensagemWhatsApp();
@@ -421,11 +466,7 @@ window.attachFinalizeHandler = function() {
         window.carrinho = [];
         window.atualizarCarrinho();
         
-        // Resetar formulário
-        document.getElementById('nomeCliente').value = '';
-        document.getElementById('telefoneCliente').value = '';
-        document.getElementById('regiaoCliente').value = '';
-        document.getElementById('detalhesEndereco').value = '';
+        // Limpa apenas os campos de pedido/pagamento, mantendo o nome/endereço para o próximo pedido
         document.getElementById('formaPagamento').value = '';
         document.getElementById('valorTroco').value = '';
         
@@ -438,22 +479,64 @@ window.attachFinalizeHandler = function() {
     });
   }
 
-  // Máscara para telefone
-  const telefoneInput = document.getElementById('telefoneCliente');
+  // Máscara e Lógica de Cadastro para telefone
   if (telefoneInput) {
+    
+    // NOVO: Adiciona o prefixo (91) no início e no blur para guiar o usuário
+    telefoneInput.value = '(91)';
+
     telefoneInput.addEventListener('input', (e) => {
       let value = e.target.value.replace(/\D/g, '');
-      if (value.length >= 11) {
-        value = value.replace(/(\d{2})(\d{1})(\d{4})(\d{4})/, '($1) $2 $3-$4');
-      } else if (value.length >= 7) {
-        value = value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
-      } else if (value.length >= 3) {
-        value = value.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+      
+      // Garante que o DDD seja 91 e limita o tamanho para 11 dígitos
+      if (value.length >= 2 && value.substring(0, 2) !== '91') {
+          value = '91' + value.substring(2);
+      } else if (value.length > 11) {
+          value = value.substring(0, 11);
       }
-      e.target.value = value;
+      
+      // Valida o telefone com o DDD 91 e 9 dígitos (11 total)
+      if (value.length === 11 && /^(91)9\d{8}$/.test(value)) {
+          const cliente = carregarCliente(value);
+          if (cliente) {
+              preencherFormulario(cliente);
+          } else {
+              // Se o número estiver no formato correto, mas for novo, limpa a notificação.
+              mostrarNotificacao('Novo cliente! Complete o cadastro.', 'info');
+          }
+      } else if (value.length === 11 && value.substring(0, 2) === '91') {
+           // Se tiver 11 dígitos mas o formato não for 919xxxx-xxxx, exibe um aviso (ex: 918xxxx-xxxx).
+           mostrarNotificacao('O número deve ser 9XXXXXXXX (9 dígitos após o DDD).', 'warning');
+      }
+      
+      // Aplica a máscara de exibição final
+      let displayValue = '';
+      if (value.length >= 11) {
+          displayValue = `(${value.substring(0, 2)}) 9 ${value.substring(3, 7)}-${value.substring(7, 11)}`;
+      } else if (value.length >= 7) {
+          displayValue = `(${value.substring(0, 2)}) 9 ${value.substring(3, 7)}-${value.substring(7)}`;
+      } else if (value.length >= 3) {
+          displayValue = `(${value.substring(0, 2)}) 9 ${value.substring(3)}`;
+      } else if (value.length > 0) {
+          displayValue = `(${value}`;
+      } else {
+          displayValue = '(91)'; // Mantém o prefixo
+      }
+      e.target.value = displayValue;
+    });
+
+    // Limpa a máscara no foco para facilitar a digitação
+    telefoneInput.addEventListener('focus', (e) => {
+        e.target.value = e.target.value.replace(/\D/g, '');
+    });
+    // Adiciona o prefixo (91) ao sair do campo se estiver vazio
+    telefoneInput.addEventListener('blur', (e) => {
+        if (e.target.value.replace(/\D/g, '').length < 3) {
+            e.target.value = '(91)';
+        }
     });
   }
-
+  
   // Atualizar carrinho
   window.atualizarCarrinho();
 };

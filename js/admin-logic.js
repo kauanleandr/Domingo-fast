@@ -1,5 +1,7 @@
 // Chave usada para armazenar os pedidos (Deve corresponder ao PEDIDOS_KEY em cart-logic.js)
 const STORAGE_KEY = 'pedidosAdmin';
+// NOVA CHAVE: Chave usada para armazenar os clientes
+const CLIENTES_KEY = 'clientesCadastrados'; 
 
 // Função para carregar todos os pedidos do localStorage
 function carregarPedidos() {
@@ -9,6 +11,16 @@ function carregarPedidos() {
 // Função para salvar o array de pedidos de volta no localStorage
 function salvarPedidos(pedidos) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(pedidos));
+}
+
+// NOVO: Função para carregar todos os clientes
+function carregarClientes() {
+    return JSON.parse(localStorage.getItem(CLIENTES_KEY) || '{}');
+}
+
+// NOVO: Função para salvar clientes (atualiza o storage)
+function salvarClientes(clientes) {
+    localStorage.setItem(CLIENTES_KEY, JSON.stringify(clientes));
 }
 
 // Função para formatar o preço (copiada de cart-logic.js para consistência)
@@ -25,7 +37,7 @@ function buildItensHtml(itens) {
 
 // Gera a URL do WhatsApp para "Pedido a caminho"
 function gerarLinkAviso(telefone) {
-    // Limpa e formata o telefone para o padrão internacional (5591981654787)
+    // Limpa e formata o telefone para o padrão internacional (5591...)
     const numeroLimpo = telefone.replace(/\D/g, ''); 
     const numeroWhatsApp = `55${numeroLimpo}`; 
 
@@ -33,7 +45,7 @@ function gerarLinkAviso(telefone) {
     return `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
 }
 
-// Função principal de renderização
+// Função principal de renderização de PEDIDOS
 function renderizarPedidos() {
     const pedidos = carregarPedidos();
     const listaPedidosDiv = document.getElementById('listaPedidos');
@@ -70,6 +82,36 @@ function renderizarPedidos() {
 
     // Adiciona event listeners dinamicamente
     adicionarEventListeners();
+}
+
+// NOVO: Função principal de renderização de CLIENTES
+function renderizarClientes() {
+    const clientes = carregarClientes();
+    const listaClientesDiv = document.getElementById('listaClientes');
+    const countClientesSpan = document.getElementById('countClientesTotal');
+    const semClientesDiv = document.getElementById('semClientes');
+    
+    if (!listaClientesDiv || !countClientesSpan) return;
+
+    let clientesHtml = '';
+    const clientesArray = Object.values(clientes);
+
+    clientesArray.sort((a, b) => a.nome.localeCompare(b.nome)); // Ordena por nome
+
+    clientesArray.forEach(cliente => {
+        clientesHtml += criarCardCliente(cliente);
+    });
+
+    listaClientesDiv.innerHTML = clientesHtml;
+    countClientesSpan.textContent = clientesArray.length;
+    
+    if (semClientesDiv) semClientesDiv.style.display = clientesArray.length === 0 ? 'block' : 'none';
+
+    // Adiciona event listeners para exclusão de clientes
+    document.querySelectorAll('.delete-client-action').forEach(btn => {
+        btn.removeEventListener('click', handleDeleteClient);
+        btn.addEventListener('click', handleDeleteClient);
+    });
 }
 
 // Constrói o template HTML para um único pedido
@@ -145,6 +187,26 @@ function criarCardPedido(pedido) {
     `;
 }
 
+// NOVO: Constrói o template HTML para um único cliente
+function criarCardCliente(cliente) {
+    const telefoneLimpo = cliente.telefone.replace(/\D/g, '');
+    return `
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card shadow-sm cliente-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-1">${cliente.nome}</h5>
+                    <p class="card-text text-muted mb-1 small">Telefone: <a href="https://wa.me/55${telefoneLimpo}" target="_blank">${cliente.telefone}</a></p>
+                    <p class="card-text mb-1 small">Região: ${cliente.regiao}</p>
+                    <p class="card-text mb-3 small">Endereço: ${cliente.detalhesEndereco}</p>
+                    <button class="btn btn-sm btn-danger delete-client-action" data-telefone="${telefoneLimpo}" title="Excluir cadastro">
+                        <i class="bi bi-trash"></i> Excluir Cadastro
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 // Funções de Ação
 function alterarStatus(id, novoStatus) {
     let pedidos = carregarPedidos();
@@ -165,19 +227,33 @@ function excluirPedido(id) {
     }
 }
 
+// NOVO: Excluir um cliente
+function excluirCliente(telefoneLimpo) {
+    let clientes = carregarClientes();
+    if (clientes[telefoneLimpo] && confirm(`Tem certeza que deseja excluir o cadastro de ${clientes[telefoneLimpo].nome}? Esta ação é irreversível.`)) {
+        delete clientes[telefoneLimpo];
+        salvarClientes(clientes);
+        renderizarClientes();
+    }
+}
+
 function adicionarEventListeners() {
-    // Event Listeners para Alterar Status
+    // Event Listeners para Alterar Status de Pedido
     document.querySelectorAll('.status-action').forEach(btn => {
-        // Remove listeners duplicados antes de adicionar (necessário após render)
         btn.removeEventListener('click', handleStatusChange);
         btn.addEventListener('click', handleStatusChange);
     });
 
-    // Event Listeners para Excluir
+    // Event Listeners para Excluir Pedido
     document.querySelectorAll('.delete-action').forEach(btn => {
-        // Remove listeners duplicados antes de adicionar
         btn.removeEventListener('click', handleDelete);
         btn.addEventListener('click', handleDelete);
+    });
+    
+    // NOVO: Event Listeners para Excluir Cliente
+    document.querySelectorAll('.delete-client-action').forEach(btn => {
+        btn.removeEventListener('click', handleDeleteClient);
+        btn.addEventListener('click', handleDeleteClient);
     });
 }
 
@@ -192,8 +268,16 @@ function handleDelete(e) {
     excluirPedido(id);
 }
 
+// NOVO: Handler para exclusão de cliente
+function handleDeleteClient(e) {
+    const telefoneLimpo = e.currentTarget.dataset.telefone;
+    excluirCliente(telefoneLimpo);
+}
+
 
 // Inicializa o Dashboard
 document.addEventListener('DOMContentLoaded', () => {
+    // Renderiza Pedidos E Clientes
     renderizarPedidos();
+    renderizarClientes();
 });

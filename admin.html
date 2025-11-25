@@ -17,6 +17,7 @@
         .pedido-card.PENDENTE { border-left-color: #ff6b35; }
         .pedido-card.CAMINHO { border-left-color: #ffc107; }
         .pedido-card.CONCLUIDO, .pedido-card.ENTREGUE { border-left-color: #198754; }
+        .cliente-card { border: 1px solid #ccc; }
         .btn-action { margin-left: 0.5rem; }
     </style>
   </head>
@@ -27,20 +28,49 @@
         </div>
     </nav>
     <div class="container py-5">
-        <h2 class="mb-4">Pedidos Pendentes (<span id="countPedidos">0</span>)</h2>
         
-        <div id="listaPedidos" class="row g-4">
-            <div id="semPedidos" class="col-12 text-center text-muted py-5" style="display: none;">
-                <i class="bi bi-list-task" style="font-size: 3rem;"></i>
-                <p class="mt-3">Nenhum pedido pendente registrado.</p>
-            </div>
-        </div>
+        <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="pedidos-tab" data-bs-toggle="tab" data-bs-target="#pedidos" type="button" role="tab">
+                    Pedidos (<span id="countPedidos">0</span>)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="clientes-tab" data-bs-toggle="tab" data-bs-target="#clientes" type="button" role="tab">
+                    Cadastros (<span id="countClientesTotal">0</span>)
+                </button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="adminTabsContent">
+            <div class="tab-pane fade show active" id="pedidos" role="tabpanel" tabindex="0">
+                <h2 class="mb-4">Pedidos Pendentes</h2>
+                
+                <div id="listaPedidos" class="row g-4">
+                    <div id="semPedidos" class="col-12 text-center text-muted py-5" style="display: none;">
+                        <i class="bi bi-list-task" style="font-size: 3rem;"></i>
+                        <p class="mt-3">Nenhum pedido pendente registrado.</p>
+                    </div>
+                </div>
 
-        <h2 class="mb-4 mt-5">Histórico (A Caminho / Concluídos)</h2>
-        <div id="listaHistorico" class="row g-4">
-            <div id="semHistorico" class="col-12 text-center text-muted py-5" style="display: none;">
-                <i class="bi bi-archive" style="font-size: 3rem;"></i>
-                <p class="mt-3">Nenhum pedido no histórico.</p>
+                <h2 class="mb-4 mt-5">Histórico</h2>
+                <div id="listaHistorico" class="row g-4">
+                    <div id="semHistorico" class="col-12 text-center text-muted py-5" style="display: none;">
+                        <i class="bi bi-archive" style="font-size: 3rem;"></i>
+                        <p class="mt-3">Nenhum pedido no histórico.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-pane fade" id="clientes" role="tabpanel" tabindex="0">
+                <h2 class="mb-4">Cadastros de Clientes</h2>
+                
+                <div id="listaClientes" class="row g-4">
+                    <div id="semClientes" class="col-12 text-center text-muted py-5" style="display: none;">
+                        <i class="bi bi-people" style="font-size: 3rem;"></i>
+                        <p class="mt-3">Nenhum cliente cadastrado.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
