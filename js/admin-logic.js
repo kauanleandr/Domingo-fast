@@ -21,6 +21,7 @@ function handleLoginState(isLoading) {
     }
 }
 
+// CORREÇÃO: Usa classes CSS no BODY para controlar a visibilidade
 function updateUI(user) {
     const body = document.body;
     
@@ -28,7 +29,7 @@ function updateUI(user) {
         // Usuário logado: Adiciona a classe que revela o painel e esconde o login
         body.classList.add('logged-in');
         
-        // CORREÇÃO: Inicia o carregamento (agora com as funções estáveis)
+        // Inicia o carregamento dos dados
         renderizarPedidos();
         renderizarClientes();
         
@@ -109,11 +110,9 @@ async function renderizarPedidos() {
     const pedidos = [];
 
     try {
-        // Ordena por ID (mais recente primeiro)
         const snapshot = await db.collection(PEDIDOS_COLLECTION).orderBy('id', 'desc').get();
         snapshot.forEach(doc => {
-            // CORREÇÃO CRÍTICA: Passa o doc.id (ID do Firestore) como 'docId' para as funções de ação
-            pedidos.push({ docId: doc.id, ...doc.data() }); 
+            pedidos.push({ docId: doc.id, ...doc.data() });
         });
     } catch(e) {
         console.error("ERRO: Falha ao carregar pedidos do Firestore.", e);
@@ -156,7 +155,6 @@ async function renderizarClientes() {
     try {
         const snapshot = await db.collection(CLIENTES_COLLECTION).get();
         snapshot.forEach(doc => {
-            // CORREÇÃO CRÍTICA: Passa o doc.id (ID do Firestore) como 'docId' para as funções de ação
             clientes.push({ docId: doc.id, ...doc.data() });
         });
     } catch(e) {
@@ -182,7 +180,6 @@ function criarCardPedido(pedido) {
     let statusBadge = '';
     let buttonHtml = '';
     
-    // O ID que será passado para as funções de ação (Excluir/Mudar Status) é o docId
     const docId = pedido.docId; 
 
     if (pedido.status === 'PENDENTE') {

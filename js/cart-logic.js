@@ -3,9 +3,6 @@
 const PEDIDOS_COLLECTION = 'pedidos';   
 const CLIENTES_COLLECTION = 'clientes'; 
 
-// O resto das constantes e funções de carrinho (carregarCarrinho, etc.)
-// continua usando localStorage, pois o carrinho de compras precisa ser local e rápido.
-
 window.carrinho = [];
 
 // Função para formatar preço
@@ -40,8 +37,8 @@ function salvarCarrinho() {
 async function salvarCliente(cliente) {
     const telefoneLimpo = cliente.telefone.replace(/\D/g, '');
     try {
-        // Tenta encontrar o cliente existente pelo telefone limpo
         const clientesRef = db.collection(CLIENTES_COLLECTION);
+        // Busca o cliente pelo telefone limpo
         const snapshot = await clientesRef.where('telefoneLimpo', '==', telefoneLimpo).limit(1).get();
 
         if (!snapshot.empty) {
@@ -51,6 +48,7 @@ async function salvarCliente(cliente) {
                 nome: cliente.nome,
                 regiao: cliente.regiao,
                 detalhesEndereco: cliente.detalhesEndereco,
+                telefoneLimpo: telefoneLimpo, // CRÍTICO: Garante que o campo de busca seja atualizado/mantido
                 dataAtualizacao: firebase.firestore.FieldValue.serverTimestamp()
             });
         } else {
@@ -71,6 +69,7 @@ async function carregarCliente(telefone) {
     const telefoneLimpo = telefone.replace(/\D/g, '');
     try {
         const clientesRef = db.collection(CLIENTES_COLLECTION);
+        // Busca o cliente pelo telefone limpo
         const snapshot = await clientesRef.where('telefoneLimpo', '==', telefoneLimpo).limit(1).get();
 
         if (!snapshot.empty) {
@@ -117,7 +116,7 @@ async function salvarPedidoAdmin() {
   });
 
   const pedido = {
-    id: Date.now(), // ID único (bom para ordenação)
+    id: Date.now(), // ID único (para ordenação)
     status: 'PENDENTE',
     dataHora: new Date().toLocaleString('pt-BR'),
     cliente: nome,
@@ -405,7 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Configurar botão de oferta principal
   const btnAddHero = document.querySelector('.btn-add-hero');
   if (btnAddHero) {
-    btnAddHero.addEventListener('click', () => {
+    btn.addEventListener('click', () => {
       const nome = document.querySelector('.hero-titulo').textContent;
       const precoTexto = document.querySelector('.hero-preco').textContent;
       const preco = extrairPreco(precoTexto);

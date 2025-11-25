@@ -28,7 +28,7 @@
         /* REGRA CHAVE: Quando o corpo tem a classe 'logged-in' */
         .logged-in #loginScreen {
             opacity: 0; /* Torna a tela de login transparente */
-            visibility: hidden; /* Remove do fluxo de eventos */
+            visibility: hidden; /* CRUCIAL: Remove totalmente do fluxo de eventos e visibilidade */
             pointer-events: none;
         }
 
