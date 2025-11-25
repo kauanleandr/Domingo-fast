@@ -361,17 +361,19 @@
         .hero-oferta {
           min-height: auto; 
           text-align: center;
-          padding: 80px 0 2rem; 
+          /* Reduzindo o padding vertical para 60px/1.5rem (era 80px/2rem) */
+          padding: 60px 0 1.5rem; 
         }
 
         .hero-oferta .row {
           flex-direction: column;
           align-items: center;
-          gap: 2rem;
+          /* Forçando um gap menor entre os elementos da coluna (era 2rem) */
+          gap: 1.5rem !important;
         }
 
         /* ORDEM PARA MOBILE: Título, Imagem, Subtítulo, Preço, Botões */
-        .hero-oferta .hero-etiqueta { order: 1; margin-bottom: 0.5rem; }
+        .hero-oferta .hero-etiqueta { order: 1; margin-bottom: 0.5rem; margin-top: 2rem; } 
         .hero-oferta .hero-titulo { order: 2; margin-top: 0; margin-bottom: 1rem; }
         .hero-oferta .col-12.d-block.d-lg-none { order: 3; } /* Imagem Mobile */
         .hero-oferta .hero-sub { order: 4; font-size: 1rem; margin-bottom: 1rem; }
@@ -381,7 +383,7 @@
 
         /* Ajustes de fonte e espaçamento na seção hero para mobile */
         .hero-titulo {
-          font-size: 2.2rem;
+          font-size: 2rem;
         }
 
         .hero-preco {
@@ -536,6 +538,48 @@
         color: var(--cor-escura);
         margin-bottom: 0.5rem;
       }
+      .info-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        box-shadow: var(--sombra-suave);
+        height: 100%;
+      }
+      
+      /* NOVO ESTILO: Card clicável e animado */
+      .info-card-link {
+        /* Define a transição e a aparência de link/bloco */
+        transition: all 0.3s ease-in-out; 
+        display: block;
+        color: var(--cor-escura); /* Mantém a cor do texto padrão */
+        text-decoration: none;
+        border: 2px solid transparent; 
+        
+        /* Herda propriedades visuais do info-card */
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        box-shadow: var(--sombra-suave);
+        height: 100%;
+      }
+      
+      .info-card-link:hover {
+        transform: translateY(-5px); /* Efeito de elevação (lift effect) */
+        box-shadow: 0 10px 20px rgba(255, 107, 53, 0.2); /* Sombra mais intensa com cor primária */
+        border-color: var(--cor-primaria); /* Destaque com borda na cor primária */
+        color: var(--cor-escura);
+        cursor: pointer; 
+      }
+      
+      .info-card-link .info-icon {
+        transition: all 0.3s ease-in-out;
+      }
+      
+      .info-card-link:hover .info-icon {
+        background: var(--cor-primaria-hover);
+        transform: scale(1.1);
+      }
+
     </style>
   </head>
   <body>
@@ -766,13 +810,17 @@
         <h2 class="section-title fade-in mb-5">Informações & Contato</h2>
         <div class="row g-4">
           <div class="col-12 col-md-6 col-lg-4 fade-in">
-            <div class="info-card text-center">
+            <a 
+              href="https://maps.app.goo.gl/8vY5KDq4GjH6327X7" 
+              class="info-card-link text-center text-decoration-none d-block" 
+              target="_blank" 
+            >
               <div class="info-icon mx-auto">
                 <i class="bi bi-geo-alt"></i>
               </div>
-              <h3 class="h5 mb-3">Localização</h3>
+              <h3 class="h5 mb-3" style="color: var(--cor-escura);">Localização</h3>
               <p class="text-muted mb-0">Rua Santa Izabel, 277<br>Bairro: Cruzeiro (Icoaraci)<br>Belém/PA</p>
-            </div>
+            </a>
           </div>
           <div class="col-12 col-md-6 col-lg-4 fade-in">
             <div class="info-card text-center">
@@ -784,30 +832,21 @@
             </div>
           </div>
           <div class="col-12 col-md-6 col-lg-4 fade-in">
-            <div class="info-card text-center">
+            <a 
+              href="https://wa.me/5591981654787" 
+              class="info-card-link text-center" 
+              target="_blank"
+            >
               <div class="info-icon mx-auto">
                 <i class="bi bi-whatsapp"></i>
               </div>
-              <h3 class="h5 mb-3">WhatsApp</h3>
+              <h3 class="h5 mb-3" style="color: var(--cor-escura);">WhatsApp</h3>
               <p class="text-muted mb-3">(91) 9 8165-4787</p>
-              <a href="https://wa.me/5591981654787" class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-whatsapp me-1"></i> Falar conosco
               </a>
-            </div>
           </div>
         </div>
-        <div class="row mt-5">
-          <div class="col-12 fade-in">
-            <div class="info-card">
-              <h3 class="h4 mb-3">Sobre o Domingo Fast</h3>
-              <p class="text-muted mb-0">
-                Somos especializados em comida rápida com sabor de casa. Todos os nossos produtos são feitos na hora, 
-                com ingredientes frescos e muito carinho. Nossa missão é levar o melhor da culinária caseira para sua mesa, 
-                seja no café da manhã ou em qualquer momento do dia. Venha experimentar nossos sabores únicos!
-              </p>
-            </div>
-          </div>
         </div>
+        
       </div>
     </section>
 
@@ -820,7 +859,9 @@
                 <i class="bi bi-egg-fried me-2 text-warning"></i> Domingo <span class="text-warning">Fast</span>
               </span>
             </div>
-            <p class="mb-2">Comida rápida com sabor de casa</p>
+            <p class="mb-2">Somos especializados em comida rápida com sabor de casa. Todos os nossos produtos são feitos na hora, 
+                com ingredientes frescos e muito carinho. Nossa missão é levar o melhor da culinária caseira para sua mesa, 
+                seja no café da manhã ou em qualquer momento do dia. Venha experimentar nossos sabores únicos!</p>
             <small class="text-secondary">© <span id="ano"></span> Domingo Fast — Todos os direitos reservados</small>
           </div>
         </div>
@@ -865,17 +906,6 @@
           }
         });
       });
-
-      const btnAddHero = document.querySelector('.btn-add-hero');
-      if (btnAddHero) {
-        btnAddHero.addEventListener('click', () => {
-          const nome = document.querySelector('.hero-titulo').textContent;
-          const precoTexto = document.querySelector('.hero-preco').textContent;
-          const preco = parseFloat(precoTexto.match(/R\$\s*([\d,]+)/g)[1].replace('R$', '').replace(',', '.').trim());
-          
-          window.adicionarProduto(nome, preco);
-        });
-      }
     </script>
   </body>
 </html>

@@ -30,6 +30,48 @@ function salvarCarrinho() {
     localStorage.setItem('carrinho', JSON.stringify(window.carrinho));
 }
 
+// NOVO: Função para salvar o pedido no localStorage Admin
+function salvarPedidoAdmin() {
+  const nome = document.getElementById('nomeCliente').value;
+  const telefone = document.getElementById('telefoneCliente').value;
+  const regiao = document.getElementById('regiaoCliente').value;
+  const detalhesEndereco = document.getElementById('detalhesEndereco').value;
+  const formaPagamento = document.getElementById('formaPagamento').value;
+  const valorTroco = document.getElementById('valorTroco').value;
+  
+  let total = 0;
+  const itensPedido = window.carrinho.map(item => {
+    const subtotal = item.preco * item.quantidade;
+    total += subtotal;
+    return {
+      nome: item.nome,
+      quantidade: item.quantidade,
+      precoUnitario: item.preco,
+      subtotal: subtotal
+    };
+  });
+
+  const pedido = {
+    id: Date.now(), // ID único baseado no timestamp
+    status: 'PENDENTE', // Status inicial
+    dataHora: new Date().toLocaleString('pt-BR'),
+    cliente: nome,
+    telefone: telefone,
+    endereco: {
+      regiao: regiao,
+      detalhes: detalhesEndereco
+    },
+    pagamento: formaPagamento,
+    troco: formaPagamento === 'dinheiro' ? valorTroco : 'N/A',
+    itens: itensPedido,
+    total: total
+  };
+
+  const pedidosSalvos = JSON.parse(localStorage.getItem('pedidosAdmin') || '[]');
+  pedidosSalvos.push(pedido);
+  localStorage.setItem('pedidosAdmin', JSON.stringify(pedidosSalvos));
+}
+
 // Atualizar interface do carrinho
 window.atualizarCarrinho = function() {
   const carrinhoDiv = document.getElementById('carrinhoProdutos');
@@ -144,13 +186,32 @@ window.removerProduto = function(index) {
   }
 };
 
+// Função para limpar todo o carrinho
+window.limparCarrinho = function() {
+  if (window.carrinho.length > 0) {
+    window.carrinho = [];
+    window.atualizarCarrinho();
+    mostrarNotificacao('Carrinho limpo com sucesso!', 'info');
+    
+    // Esconder o formulário de cliente, se estiver visível, e voltar aos botões iniciais
+    const formCliente = document.getElementById('formCliente');
+    const botoesCarrinho = document.getElementById('botoesCarrinho');
+    if (formCliente && botoesCarrinho) {
+        formCliente.style.display = 'none';
+        botoesCarrinho.style.display = 'block';
+    }
+  } else {
+    mostrarNotificacao('O carrinho já está vazio.', 'warning');
+  }
+};
+
 // Mostrar notificação
 function mostrarNotificacao(mensagem, tipo = 'info') {
   const existente = document.querySelector('.toast-notification');
   if (existente) existente.remove();
 
   const toast = document.createElement('div');
-  toast.className = `toast-notification alert alert-${tipo === 'success' ? 'success' : 'info'} position-fixed`;
+  toast.className = `toast-notification alert alert-${tipo === 'success' ? 'success' : tipo === 'danger' ? 'danger' : 'info'} position-fixed`;
   toast.style.cssText = `
     top: 100px; 
     right: 20px; 
@@ -160,7 +221,7 @@ function mostrarNotificacao(mensagem, tipo = 'info') {
   `;
   toast.innerHTML = `
     <div class="d-flex align-items-center">
-      <i class="bi bi-${tipo === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+      <i class="bi bi-${tipo === 'success' ? 'check-circle' : tipo === 'danger' ? 'x-circle' : 'info-circle'} me-2"></i>
       ${mensagem}
     </div>
   `;
@@ -177,14 +238,18 @@ function mostrarNotificacao(mensagem, tipo = 'info') {
 function gerarMensagemWhatsApp() {
   const nome = document.getElementById('nomeCliente').value;
   const telefone = document.getElementById('telefoneCliente').value;
-  const endereco = document.getElementById('enderecoCliente').value;
+  const regiao = document.getElementById('regiaoCliente').value;
+  const detalhesEndereco = document.getElementById('detalhesEndereco').value;
   const formaPagamento = document.getElementById('formaPagamento').value;
   const valorTroco = document.getElementById('valorTroco').value;
+
+  // Combina Região e Detalhes
+  const enderecoCompleto = `${regiao} - ${detalhesEndereco}`;
 
   let mensagem = `🍔 *PEDIDO - Domingo FAST* 🍔\n\n`;
   mensagem += `👤 *Cliente:* ${nome}\n`;
   mensagem += `📱 *Telefone:* ${telefone}\n`;
-  mensagem += `📍 *Endereço:* ${endereco}\n\n`;
+  mensagem += `📍 *Endereço:* ${enderecoCompleto}\n\n`;
   
   mensagem += `🛍️ *ITENS DO PEDIDO:*\n`;
   let total = 0;
@@ -195,7 +260,8 @@ function gerarMensagemWhatsApp() {
     total += subtotal;
   });
   
-  mensagem += `\n💰 *TOTAL: R$ ${formatarPreco(total)}*\n\n`;
+  mensagem += `\n💰 *TOTAL: R$ ${formatarPreco(total)}*\n`;
+  mensagem += `🛵 *Frete:* Grátis (Sem taxa de entrega) 🎁\n\n`; 
   
   mensagem += `💳 *Forma de pagamento:* `;
   switch(formaPagamento) {
@@ -222,11 +288,12 @@ function gerarMensagemWhatsApp() {
 function validarFormulario() {
   const nome = document.getElementById('nomeCliente').value.trim();
   const telefone = document.getElementById('telefoneCliente').value.trim();
-  const endereco = document.getElementById('enderecoCliente').value.trim();
+  const regiao = document.getElementById('regiaoCliente').value;
+  const detalhesEndereco = document.getElementById('detalhesEndereco').value.trim();
   const formaPagamento = document.getElementById('formaPagamento').value;
 
-  if (!nome || !telefone || !endereco || !formaPagamento) {
-    mostrarNotificacao('Por favor, preencha todos os campos obrigatórios', 'warning');
+  if (!nome || !telefone || !regiao || !detalhesEndereco || !formaPagamento) {
+    mostrarNotificacao('Por favor, preencha todos os campos e selecione sua Região.', 'warning');
     return false;
   }
 
@@ -235,6 +302,11 @@ function validarFormulario() {
     return false;
   }
 
+  if (regiao === "") {
+      mostrarNotificacao('🚫 Por favor, selecione sua Região para entrega.', 'danger');
+      return false;
+  }
+  
   return true;
 }
 
@@ -282,9 +354,19 @@ window.attachFinalizeHandler = function() {
   const formCliente = document.getElementById('formCliente');
   const botoesCarrinho = document.getElementById('botoesCarrinho');
 
-  if (!continuarBtn) return;
+  // NOVO: Botão limpar carrinho
+  const limparTudoBtn = document.getElementById('limparTudo');
+  if (limparTudoBtn) {
+    // Remover listener existente para evitar duplicação (boas práticas)
+    const novoLimparTudoBtn = limparTudoBtn.cloneNode(true);
+    limparTudoBtn.parentNode.replaceChild(novoLimparTudoBtn, limparTudoBtn);
+    
+    novoLimparTudoBtn.addEventListener('click', window.limparCarrinho);
+  }
 
-  // Remover listeners existentes
+  if (!continuarBtn) return;
+  
+  // Remover listeners existentes do continuarBtn
   const novoContinuarBtn = continuarBtn.cloneNode(true);
   continuarBtn.parentNode.replaceChild(novoContinuarBtn, continuarBtn);
 
@@ -321,8 +403,12 @@ window.attachFinalizeHandler = function() {
   // Evento para finalizar pedido
   if (finalizarBtn) {
     finalizarBtn.addEventListener('click', () => {
+      // O formulário só é enviado para o WhatsApp se a validação for bem-sucedida, incluindo a checagem de endereço.
       if (!validarFormulario()) return;
 
+      // NOVO: 1. Salva o pedido no dashboard antes de redirecionar
+      salvarPedidoAdmin(); 
+      
       const mensagem = gerarMensagemWhatsApp();
       const numeroWhatsApp = '5591981654787';
       const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${mensagem}`;
@@ -338,7 +424,8 @@ window.attachFinalizeHandler = function() {
         // Resetar formulário
         document.getElementById('nomeCliente').value = '';
         document.getElementById('telefoneCliente').value = '';
-        document.getElementById('enderecoCliente').value = '';
+        document.getElementById('regiaoCliente').value = '';
+        document.getElementById('detalhesEndereco').value = '';
         document.getElementById('formaPagamento').value = '';
         document.getElementById('valorTroco').value = '';
         

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>Domingo Fast - ADMIN</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Inter', sans-serif; }
+        .pedido-card {
+            border-left: 5px solid var(--bs-primary);
+            transition: all 0.3s ease;
+        }
+        .pedido-card.PENDENTE { border-left-color: #ff6b35; }
+        .pedido-card.CAMINHO { border-left-color: #ffc107; }
+        .pedido-card.CONCLUIDO, .pedido-card.ENTREGUE { border-left-color: #198754; }
+        .btn-action { margin-left: 0.5rem; }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-dark" style="background-color: #ff6b35;">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1"><i class="bi bi-gear-fill me-2"></i> Dashboard Admin - Domingo Fast</span>
+        </div>
+    </nav>
+    <div class="container py-5">
+        <h2 class="mb-4">Pedidos Pendentes (<span id="countPedidos">0</span>)</h2>
+        
+        <div id="listaPedidos" class="row g-4">
+            <div id="semPedidos" class="col-12 text-center text-muted py-5" style="display: none;">
+                <i class="bi bi-list-task" style="font-size: 3rem;"></i>
+                <p class="mt-3">Nenhum pedido pendente registrado.</p>
+            </div>
+        </div>
+
+        <h2 class="mb-4 mt-5">Histórico (A Caminho / Concluídos)</h2>
+        <div id="listaHistorico" class="row g-4">
+            <div id="semHistorico" class="col-12 text-center text-muted py-5" style="display: none;">
+                <i class="bi bi-archive" style="font-size: 3rem;"></i>
+                <p class="mt-3">Nenhum pedido no histórico.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/admin-logic.js"></script>
+  </body>
+</html>

@@ -7,10 +7,8 @@
   </div>
 
   <div class="offcanvas-body">
-    <!-- Lista de produtos -->
     <div id="carrinhoProdutos" class="mb-4"></div>
     
-    <!-- Total -->
     <div class="border-top pt-3 mb-4">
       <div class="d-flex justify-content-between align-items-center">
         <strong class="h5 mb-0">Total:</strong>
@@ -18,25 +16,36 @@
       </div>
     </div>
 
-    <!-- Formulário de dados do cliente -->
     <div id="formCliente" style="display: none;">
       <h6 class="mb-3">
         <i class="bi bi-person me-2"></i>Dados para entrega
       </h6>
       
       <div class="mb-3">
+        <label for="telefoneCliente" class="form-label">WhatsApp (DDD 91)</label>
+        <input type="tel" class="form-control" id="telefoneCliente" placeholder="(91) 9 9999-9999" value="(91)" required>
+      </div>
+
+      <div class="mb-3">
         <label for="nomeCliente" class="form-label">Nome completo</label>
         <input type="text" class="form-control" id="nomeCliente" placeholder="Seu nome completo" required>
       </div>
 
       <div class="mb-3">
-        <label for="telefoneCliente" class="form-label">WhatsApp</label>
-        <input type="tel" class="form-control" id="telefoneCliente" placeholder="(91) 9 9999-9999" required>
+        <label for="regiaoCliente" class="form-label">Selecione sua Região</label>
+        <select class="form-select" id="regiaoCliente" required>
+          <option value="">Selecione...</option>
+          <option value="CRUZEIRO">Cruzeiro (Local da Loja)</option>
+          <option value="AGULHA">Agulha</option>
+          <option value="MARACACUERA">Maracacuera</option>
+          <option value="TAPANÃ">Tapanã</option>
+          <option value="TENONÉ">Tenoné</option>
+        </select>
       </div>
-
+      
       <div class="mb-3">
-        <label for="enderecoCliente" class="form-label">Endereço completo</label>
-        <textarea class="form-control" id="enderecoCliente" rows="3" placeholder="Rua, número, bairro, referências..." required></textarea>
+        <label for="detalhesEndereco" class="form-label">Detalhes do Endereço (Rua, Número, Referência)</label>
+        <textarea class="form-control" id="detalhesEndereco" rows="3" placeholder="Rua, número, referências..." required></textarea>
       </div>
 
       <div class="mb-4">
@@ -64,13 +73,15 @@
       </div>
     </div>
 
-    <!-- Botões iniciais do carrinho -->
     <div id="botoesCarrinho">
       <div class="d-grid gap-2">
         <button id="continuarPedido" class="btn btn-primary btn-lg" disabled>
           <i class="bi bi-arrow-right me-2"></i>Continuar pedido
         </button>
-        <button class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">
+        <button id="limparTudo" class="btn btn-danger btn-sm mt-2">
+            <i class="bi bi-trash me-2"></i>Limpar tudo
+        </button>
+        <button class="btn btn-outline-secondary mt-2" data-bs-dismiss="offcanvas">
           <i class="bi bi-plus me-2"></i>Adicionar mais itens
         </button>
       </div>
