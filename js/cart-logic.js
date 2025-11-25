@@ -1,7 +1,12 @@
-// Sistema de carrinho moderno e completo
+// O db (referência do Firestore) é esperado ser inicializado no index.html
+// Coleções a serem usadas no Firestore:
+const PEDIDOS_COLLECTION = 'pedidos';   
+const CLIENTES_COLLECTION = 'clientes'; 
+
+// O resto das constantes e funções de carrinho (carregarCarrinho, etc.)
+// continua usando localStorage, pois o carrinho de compras precisa ser local e rápido.
+
 window.carrinho = [];
-const CLIENTES_KEY = 'clientesCadastrados'; // Chave para salvar os clientes
-const PEDIDOS_KEY = 'pedidosAdmin';       // Chave para salvar os pedidos admin
 
 // Função para formatar preço
 function formatarPreco(valor) {
@@ -10,16 +15,14 @@ function formatarPreco(valor) {
 
 // Função para extrair preço do texto (lida com promoções)
 function extrairPreco(precoTexto) {
-  // Pega todos os valores numéricos do texto
   const matches = precoTexto.match(/[\d,]+(?=\s*$)/);
   if (matches && matches.length > 0) {
-    // Retorna o último valor encontrado, convertido para float
     return parseFloat(matches[0].replace(',', '.'));
   }
   return 0;
 }
 
-// Carregar carrinho do localStorage ao iniciar
+// Carregar carrinho (continua local, para ser rápido)
 function carregarCarrinho() {
     const carrinhoSalvo = localStorage.getItem('carrinho');
     if (carrinhoSalvo) {
@@ -27,29 +30,57 @@ function carregarCarrinho() {
     }
 }
 
-// Salvar carrinho no localStorage
+// Salvar carrinho (continua local)
 function salvarCarrinho() {
     localStorage.setItem('carrinho', JSON.stringify(window.carrinho));
 }
 
-// FUNÇÕES DE CADASTRO DE CLIENTE
-function getClientes() {
-    return JSON.parse(localStorage.getItem(CLIENTES_KEY) || '{}');
+// FUNÇÕES DE CADASTRO DE CLIENTE (AGORA USAM FIRESTORE)
+
+async function salvarCliente(cliente) {
+    const telefoneLimpo = cliente.telefone.replace(/\D/g, '');
+    try {
+        // Tenta encontrar o cliente existente pelo telefone limpo
+        const clientesRef = db.collection(CLIENTES_COLLECTION);
+        const snapshot = await clientesRef.where('telefoneLimpo', '==', telefoneLimpo).limit(1).get();
+
+        if (!snapshot.empty) {
+            // Cliente encontrado: Atualiza o registro existente (Update)
+            const docId = snapshot.docs[0].id;
+            await clientesRef.doc(docId).update({
+                nome: cliente.nome,
+                regiao: cliente.regiao,
+                detalhesEndereco: cliente.detalhesEndereco,
+                dataAtualizacao: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } else {
+            // Cliente não encontrado: Cria um novo registro (Create)
+            await clientesRef.add({
+                ...cliente,
+                telefoneLimpo: telefoneLimpo,
+                dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+    } catch (e) {
+        console.error("Erro ao salvar cliente no Firestore:", e);
+        mostrarNotificacao('Erro ao salvar cadastro do cliente na nuvem.', 'danger');
+    }
 }
 
-function salvarCliente(cliente) {
-    const clientes = getClientes();
-    // Usa o número de telefone limpo como chave única
-    const telefoneLimpo = cliente.telefone.replace(/\D/g, ''); 
-    
-    clientes[telefoneLimpo] = cliente;
-    localStorage.setItem(CLIENTES_KEY, JSON.stringify(clientes));
-}
-
-function carregarCliente(telefone) {
-    const clientes = getClientes();
+async function carregarCliente(telefone) {
     const telefoneLimpo = telefone.replace(/\D/g, '');
-    return clientes[telefoneLimpo] || null;
+    try {
+        const clientesRef = db.collection(CLIENTES_COLLECTION);
+        const snapshot = await clientesRef.where('telefoneLimpo', '==', telefoneLimpo).limit(1).get();
+
+        if (!snapshot.empty) {
+            return snapshot.docs[0].data();
+        }
+        return null;
+    } catch (e) {
+        console.error("Erro ao buscar cliente no Firestore:", e);
+        return null;
+    }
 }
 
 // Preenche o formulário se o cliente for encontrado
@@ -64,8 +95,8 @@ function preencherFormulario(cliente) {
 }
 // FIM FUNÇÕES DE CADASTRO DE CLIENTE
 
-// NOVO: Função para salvar o pedido no localStorage Admin
-function salvarPedidoAdmin() {
+// Função para salvar o pedido na Nuvem
+async function salvarPedidoAdmin() {
   const nome = document.getElementById('nomeCliente').value;
   const telefone = document.getElementById('telefoneCliente').value;
   const regiao = document.getElementById('regiaoCliente').value;
@@ -86,8 +117,8 @@ function salvarPedidoAdmin() {
   });
 
   const pedido = {
-    id: Date.now(), // ID único baseado no timestamp
-    status: 'PENDENTE', // Status inicial
+    id: Date.now(), // ID único (bom para ordenação)
+    status: 'PENDENTE',
     dataHora: new Date().toLocaleString('pt-BR'),
     cliente: nome,
     telefone: telefone,
@@ -101,9 +132,16 @@ function salvarPedidoAdmin() {
     total: total
   };
 
-  const pedidosSalvos = JSON.parse(localStorage.getItem(PEDIDOS_KEY) || '[]');
-  pedidosSalvos.push(pedido);
-  localStorage.setItem(PEDIDOS_KEY, JSON.stringify(pedidosSalvos));
+  try {
+      // Envia o pedido para a Nuvem
+      await db.collection(PEDIDOS_COLLECTION).add({
+          ...pedido,
+          dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
+      });
+  } catch(e) {
+      console.error("Erro ao salvar pedido no Firestore:", e);
+      mostrarNotificacao('Erro ao finalizar pedido na nuvem.', 'danger');
+  }
 }
 
 // Atualizar interface do carrinho
@@ -438,21 +476,22 @@ window.attachFinalizeHandler = function() {
 
   // Evento para finalizar pedido
   if (finalizarBtn) {
-    finalizarBtn.addEventListener('click', () => {
+    // FUNÇÃO PRINCIPAL: ASYNC para interagir com a Nuvem
+    finalizarBtn.addEventListener('click', async () => {
       // 1. O formulário só é enviado/salvo se a validação for bem-sucedida.
       if (!validarFormulario()) return;
 
-      // 2. SALVA/ATUALIZA o cadastro do cliente
+      // 2. SALVA/ATUALIZA o cadastro do cliente na Nuvem
       const novoCadastro = {
           nome: document.getElementById('nomeCliente').value,
           telefone: document.getElementById('telefoneCliente').value,
           regiao: document.getElementById('regiaoCliente').value,
           detalhesEndereco: document.getElementById('detalhesEndereco').value,
       };
-      salvarCliente(novoCadastro);
+      await salvarCliente(novoCadastro);
 
-      // 3. Salva o pedido no dashboard
-      salvarPedidoAdmin(); 
+      // 3. Salva o pedido na Nuvem
+      await salvarPedidoAdmin(); 
       
       const mensagem = gerarMensagemWhatsApp();
       const numeroWhatsApp = '5591981654787';
@@ -482,10 +521,12 @@ window.attachFinalizeHandler = function() {
   // Máscara e Lógica de Cadastro para telefone
   if (telefoneInput) {
     
-    // NOVO: Adiciona o prefixo (91) no início e no blur para guiar o usuário
-    telefoneInput.value = '(91)';
+    // Adiciona o prefixo (91) no início
+    if (telefoneInput.value.replace(/\D/g, '').length < 3) {
+      telefoneInput.value = '(91)';
+    }
 
-    telefoneInput.addEventListener('input', (e) => {
+    telefoneInput.addEventListener('input', async (e) => {
       let value = e.target.value.replace(/\D/g, '');
       
       // Garante que o DDD seja 91 e limita o tamanho para 11 dígitos
@@ -495,18 +536,14 @@ window.attachFinalizeHandler = function() {
           value = value.substring(0, 11);
       }
       
-      // Valida o telefone com o DDD 91 e 9 dígitos (11 total)
+      // Lógica de Autofill (busca na Nuvem)
       if (value.length === 11 && /^(91)9\d{8}$/.test(value)) {
-          const cliente = carregarCliente(value);
+          const cliente = await carregarCliente(value);
           if (cliente) {
               preencherFormulario(cliente);
           } else {
-              // Se o número estiver no formato correto, mas for novo, limpa a notificação.
               mostrarNotificacao('Novo cliente! Complete o cadastro.', 'info');
           }
-      } else if (value.length === 11 && value.substring(0, 2) === '91') {
-           // Se tiver 11 dígitos mas o formato não for 919xxxx-xxxx, exibe um aviso (ex: 918xxxx-xxxx).
-           mostrarNotificacao('O número deve ser 9XXXXXXXX (9 dígitos após o DDD).', 'warning');
       }
       
       // Aplica a máscara de exibição final

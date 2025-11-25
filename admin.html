@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <title>Domingo Fast - ADMIN</title>
 
+    <!-- Inclui Bootstrap e ícones -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -29,6 +30,7 @@
     </nav>
     <div class="container py-5">
         
+        <!-- Tabs de Navegação -->
         <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="pedidos-tab" data-bs-toggle="tab" data-bs-target="#pedidos" type="button" role="tab">
@@ -43,6 +45,7 @@
         </ul>
         
         <div class="tab-content" id="adminTabsContent">
+            <!-- Conteúdo da Tab Pedidos -->
             <div class="tab-pane fade show active" id="pedidos" role="tabpanel" tabindex="0">
                 <h2 class="mb-4">Pedidos Pendentes</h2>
                 
@@ -62,6 +65,7 @@
                 </div>
             </div>
             
+            <!-- Conteúdo da Tab Clientes (NOVO) -->
             <div class="tab-pane fade" id="clientes" role="tabpanel" tabindex="0">
                 <h2 class="mb-4">Cadastros de Clientes</h2>
                 
@@ -74,6 +78,25 @@
             </div>
         </div>
     </div>
+    
+    <!-- Novo: Adicionando Firebase SDKs ao admin.html para que ele possa se conectar ao db -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script>
+        // Use os valores REAIS que você forneceu do console
+        const firebaseConfig = {
+            apiKey: "AIzaSyB_eg5Ff32VVWPjQXxupsEBtjKtcRguxpY",
+            authDomain: "domingo-fast.firebaseapp.com",
+            projectId: "domingo-fast",
+            storageBucket: "domingo-fast.firebasestorage.app",
+            messagingSenderId: "801090675200",
+            appId: "1:801090675200:web:3ae10c37b21eecc2656ee5",
+            measurementId: "G-GDFVB3B20P"
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(); 
+    </script>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/admin-logic.js"></script>
