@@ -5,12 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <title>Domingo Fast - ADMIN</title>
 
-    <!-- Inclui Bootstrap e ícones -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { background-color: #f8f9fa; font-family: 'Inter', sans-serif; }
+        
+        /* NOVO: Regras de controle de visibilidade */
+        #loginScreen {
+            position: fixed; 
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1000; /* Garante que fique por cima */
+            background-color: #f8f9fa; 
+            transition: opacity 0.3s ease;
+        }
+
+        #adminContent {
+            display: none; /* Escondido por padrão */
+        }
+
+        /* REGRA CHAVE: Quando o corpo tem a classe 'logged-in' */
+        .logged-in #loginScreen {
+            opacity: 0; /* Torna a tela de login transparente */
+            visibility: hidden; /* Remove do fluxo de eventos */
+            pointer-events: none;
+        }
+
+        .logged-in #adminContent {
+            display: block !important; /* Força a exibição do painel */
+        }
+        /* FIM NOVO CSS */
+        
         .pedido-card {
             border-left: 5px solid var(--bs-primary);
             transition: all 0.3s ease;
@@ -23,67 +49,86 @@
     </style>
   </head>
   <body>
-    <nav class="navbar navbar-dark" style="background-color: #ff6b35;">
-        <div class="container">
-            <span class="navbar-brand mb-0 h1"><i class="bi bi-gear-fill me-2"></i> Dashboard Admin - Domingo Fast</span>
-        </div>
-    </nav>
-    <div class="container py-5">
-        
-        <!-- Tabs de Navegação -->
-        <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="pedidos-tab" data-bs-toggle="tab" data-bs-target="#pedidos" type="button" role="tab">
-                    Pedidos (<span id="countPedidos">0</span>)
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="clientes-tab" data-bs-toggle="tab" data-bs-target="#clientes" type="button" role="tab">
-                    Cadastros (<span id="countClientesTotal">0</span>)
-                </button>
-            </li>
-        </ul>
-        
-        <div class="tab-content" id="adminTabsContent">
-            <!-- Conteúdo da Tab Pedidos -->
-            <div class="tab-pane fade show active" id="pedidos" role="tabpanel" tabindex="0">
-                <h2 class="mb-4">Pedidos Pendentes</h2>
-                
-                <div id="listaPedidos" class="row g-4">
-                    <div id="semPedidos" class="col-12 text-center text-muted py-5" style="display: none;">
-                        <i class="bi bi-list-task" style="font-size: 3rem;"></i>
-                        <p class="mt-3">Nenhum pedido pendente registrado.</p>
-                    </div>
-                </div>
-
-                <h2 class="mb-4 mt-5">Histórico</h2>
-                <div id="listaHistorico" class="row g-4">
-                    <div id="semHistorico" class="col-12 text-center text-muted py-5" style="display: none;">
-                        <i class="bi bi-archive" style="font-size: 3rem;"></i>
-                        <p class="mt-3">Nenhum pedido no histórico.</p>
-                    </div>
-                </div>
+    <div id="loginScreen" class="d-flex align-items-center justify-content-center">
+        <div class="card shadow-lg p-4" style="width: 100%; max-width: 400px;">
+            <h4 class="card-title text-center mb-4"><i class="bi bi-person-lock me-2"></i>Acesso Admin</h4>
+            <div class="mb-3">
+                <label for="adminEmail" class="form-label">Email</label>
+                <input type="email" class="form-control" id="adminEmail" required>
             </div>
+            <div class="mb-3">
+                <label for="adminPassword" class="form-label">Senha</label>
+                <input type="password" class="form-control" id="adminPassword" required>
+            </div>
+            <button id="btnLogin" class="btn btn-primary btn-lg mt-3">
+                <span id="btnText">Entrar</span>
+                <span id="loadingSpinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
+            </button>
+            <p id="loginError" class="text-danger text-center mt-3 small" style="display: none;">Email ou senha incorretos.</p>
+        </div>
+    </div>
+
+    <div id="adminContent">
+        <nav class="navbar navbar-dark" style="background-color: #ff6b35;">
+            <div class="container">
+                <span class="navbar-brand mb-0 h1"><i class="bi bi-gear-fill me-2"></i> Dashboard Admin</span>
+                <button id="btnLogout" class="btn btn-sm btn-outline-light"><i class="bi bi-box-arrow-right"></i> Sair</button>
+            </div>
+        </nav>
+        <div class="container py-5">
             
-            <!-- Conteúdo da Tab Clientes (NOVO) -->
-            <div class="tab-pane fade" id="clientes" role="tabpanel" tabindex="0">
-                <h2 class="mb-4">Cadastros de Clientes</h2>
+            <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="pedidos-tab" data-bs-toggle="tab" data-bs-target="#pedidos" type="button" role="tab">
+                        Pedidos (<span id="countPedidos">0</span>)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="clientes-tab" data-bs-toggle="tab" data-bs-target="#clientes" type="button" role="tab">
+                        Cadastros (<span id="countClientesTotal">0</span>)
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="adminTabsContent">
+                <div class="tab-pane fade show active" id="pedidos" role="tabpanel" tabindex="0">
+                    <h2 class="mb-4">Pedidos Pendentes</h2>
+                    
+                    <div id="listaPedidos" class="row g-4">
+                        <div id="semPedidos" class="col-12 text-center text-muted py-5" style="display: none;">
+                            <i class="bi bi-list-task" style="font-size: 3rem;"></i>
+                            <p class="mt-3">Nenhum pedido pendente registrado.</p>
+                        </div>
+                    </div>
+
+                    <h2 class="mb-4 mt-5">Histórico</h2>
+                    <div id="listaHistorico" class="row g-4">
+                        <div id="semHistorico" class="col-12 text-center text-muted py-5" style="display: none;">
+                            <i class="bi bi-archive" style="font-size: 3rem;"></i>
+                            <p class="mt-3">Nenhum pedido no histórico.</p>
+                        </div>
+                    </div>
+                </div>
                 
-                <div id="listaClientes" class="row g-4">
-                    <div id="semClientes" class="col-12 text-center text-muted py-5" style="display: none;">
-                        <i class="bi bi-people" style="font-size: 3rem;"></i>
-                        <p class="mt-3">Nenhum cliente cadastrado.</p>
+                <div class="tab-pane fade" id="clientes" role="tabpanel" tabindex="0">
+                    <h2 class="mb-4">Cadastros de Clientes</h2>
+                    
+                    <div id="listaClientes" class="row g-4">
+                        <div id="semClientes" class="col-12 text-center text-muted py-5" style="display: none;">
+                            <i class="bi bi-people" style="font-size: 3rem;"></i>
+                            <p class="mt-3">Nenhum cliente cadastrado.</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Novo: Adicionando Firebase SDKs ao admin.html para que ele possa se conectar ao db -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script> 
     <script>
-        // Use os valores REAIS que você forneceu do console
+        // Suas chaves de configuração (Valores reais do seu projeto domingo-fast)
         const firebaseConfig = {
             apiKey: "AIzaSyB_eg5Ff32VVWPjQXxupsEBtjKtcRguxpY",
             authDomain: "domingo-fast.firebaseapp.com",
@@ -96,8 +141,8 @@
 
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore(); 
+        const auth = firebase.auth(); 
     </script>
-    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/admin-logic.js"></script>
   </body>

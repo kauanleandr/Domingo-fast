@@ -1,7 +1,70 @@
-// O db (referência do Firestore) é esperado ser inicializado no index.html
-// As coleções são as mesmas usadas no cart-logic.js
+// O db e auth (referências do Firebase) são esperados ser inicializados em admin.html
 const PEDIDOS_COLLECTION = 'pedidos';   
 const CLIENTES_COLLECTION = 'clientes'; 
+
+// FUNÇÕES DE AUTENTICAÇÃO E CONTROLE DE ACESSO
+function handleLoginState(isLoading) {
+    const btnText = document.getElementById('btnText');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const btnLogin = document.getElementById('btnLogin');
+
+    if (btnText && loadingSpinner && btnLogin) {
+        if (isLoading) {
+            btnText.style.display = 'none';
+            loadingSpinner.style.display = 'inline-block';
+            btnLogin.disabled = true;
+        } else {
+            btnText.style.display = 'inline-block';
+            loadingSpinner.style.display = 'none';
+            btnLogin.disabled = false;
+        }
+    }
+}
+
+function updateUI(user) {
+    const body = document.body;
+    
+    if (user) {
+        // Usuário logado: Adiciona a classe que revela o painel e esconde o login
+        body.classList.add('logged-in');
+        
+        // CORREÇÃO: Inicia o carregamento (agora com as funções estáveis)
+        renderizarPedidos();
+        renderizarClientes();
+        
+        console.warn("ADMIN LOGGED IN. FIREBASE RULES SHOULD BE RESTRICTED TO AUTHENTICATED USERS.");
+    } else {
+        // Usuário deslogado: Remove a classe que esconde o painel
+        body.classList.remove('logged-in');
+    }
+}
+
+async function signInAdmin() {
+    const email = document.getElementById('adminEmail').value;
+    const password = document.getElementById('adminPassword').value;
+    const loginError = document.getElementById('loginError');
+    
+    handleLoginState(true); // INÍCIO: Mostra o spinner
+    
+    try {
+        await auth.signInWithEmailAndPassword(email, password);
+        loginError.style.display = 'none';
+    } catch (error) {
+        console.error("Login Error:", error.message);
+        loginError.style.display = 'block';
+    } finally {
+        handleLoginState(false); 
+    }
+}
+
+async function signOutAdmin() {
+    try {
+        await auth.signOut();
+    } catch (error) {
+        console.error("Logout Error:", error.message);
+    }
+}
+// FIM FUNÇÕES DE AUTENTICAÇÃO
 
 // Função para formatar o preço
 function formatarPreco(valor) {
@@ -12,7 +75,6 @@ function formatarPreco(valor) {
 function buildItensHtml(itens) {
     if (!itens || itens.length === 0) return '<li>Nenhum item listado.</li>';
     return itens.map(item => {
-        // Garantindo que subtotal e precoUnitario existam para exibição
         const subtotal = item.subtotal ? formatarPreco(item.subtotal) : 'N/A';
         const precoUnitario = item.precoUnitario ? formatarPreco(item.precoUnitario) : 'N/A';
         return `
@@ -31,7 +93,7 @@ function gerarLinkAviso(telefone) {
 
 // Função principal de renderização de PEDIDOS (Firestore)
 async function renderizarPedidos() {
-    if (typeof db === 'undefined') return; // Garante que o Firebase está inicializado
+    if (!auth.currentUser || typeof db === 'undefined') return;
     
     const listaPedidosDiv = document.getElementById('listaPedidos');
     const listaHistoricoDiv = document.getElementById('listaHistorico');
@@ -47,10 +109,11 @@ async function renderizarPedidos() {
     const pedidos = [];
 
     try {
-        // Busca todos os pedidos, ordenados pelo ID de criação (timestamp)
+        // Ordena por ID (mais recente primeiro)
         const snapshot = await db.collection(PEDIDOS_COLLECTION).orderBy('id', 'desc').get();
         snapshot.forEach(doc => {
-            pedidos.push({ id: doc.id, ...doc.data() }); // Adiciona o ID do documento do Firestore
+            // CORREÇÃO CRÍTICA: Passa o doc.id (ID do Firestore) como 'docId' para as funções de ação
+            pedidos.push({ docId: doc.id, ...doc.data() }); 
         });
     } catch(e) {
         console.error("ERRO: Falha ao carregar pedidos do Firestore.", e);
@@ -61,7 +124,6 @@ async function renderizarPedidos() {
     pedidos.forEach(pedido => {
         const cardHtml = criarCardPedido(pedido);
         
-        // Coloca pedidos "A Caminho" no histórico junto com os Concluídos
         if (pedido.status === 'CONCLUIDO' || pedido.status === 'ENTREGUE' || pedido.status === 'CAMINHO') {
             listaHistoricoDiv.insertAdjacentHTML('beforeend', cardHtml);
         } else {
@@ -80,7 +142,7 @@ async function renderizarPedidos() {
 
 // Função principal de renderização de CLIENTES (Firestore)
 async function renderizarClientes() {
-    if (typeof db === 'undefined') return; // Garante que o Firebase está inicializado
+    if (!auth.currentUser || typeof db === 'undefined') return;
     
     const listaClientesDiv = document.getElementById('listaClientes');
     const countClientesSpan = document.getElementById('countClientesTotal');
@@ -92,10 +154,10 @@ async function renderizarClientes() {
     const clientes = [];
 
     try {
-        // Busca todos os clientes
         const snapshot = await db.collection(CLIENTES_COLLECTION).get();
         snapshot.forEach(doc => {
-            clientes.push({ id: doc.id, ...doc.data() }); // Adiciona o ID do documento do Firestore
+            // CORREÇÃO CRÍTICA: Passa o doc.id (ID do Firestore) como 'docId' para as funções de ação
+            clientes.push({ docId: doc.id, ...doc.data() });
         });
     } catch(e) {
         console.error("ERRO: Falha ao carregar clientes do Firestore.", e);
@@ -103,7 +165,6 @@ async function renderizarClientes() {
         return;
     }
     
-    // Ordenar por nome (client-side sorting)
     clientes.sort((a, b) => (a.nome || '').localeCompare(b.nome || '')); 
 
     clientes.forEach(cliente => {
@@ -113,8 +174,6 @@ async function renderizarClientes() {
     countClientesSpan.textContent = clientes.length;
     
     if (semClientesDiv) semClientesDiv.style.display = clientes.length === 0 ? 'block' : 'none';
-    
-    // Listeners para exclusão de clientes são adicionados em adicionarEventListeners
 }
 
 
@@ -123,8 +182,8 @@ function criarCardPedido(pedido) {
     let statusBadge = '';
     let buttonHtml = '';
     
-    // O ID aqui é o ID do documento do Firestore (doc.id)
-    const docId = pedido.id; 
+    // O ID que será passado para as funções de ação (Excluir/Mudar Status) é o docId
+    const docId = pedido.docId; 
 
     if (pedido.status === 'PENDENTE') {
         statusBadge = '<span class="badge text-bg-warning"><i class="bi bi-clock me-1"></i> Aguardando</span>';
@@ -196,7 +255,7 @@ function criarCardPedido(pedido) {
 // Constrói o template HTML para um único cliente
 function criarCardCliente(cliente) {
     const telefoneLimpo = cliente.telefone.replace(/\D/g, '');
-    const docId = cliente.id; 
+    const docId = cliente.docId; 
     
     return `
         <div class="col-12 col-md-6 col-lg-4">
@@ -215,37 +274,37 @@ function criarCardCliente(cliente) {
     `;
 }
 
-// Funções de Ação
+// Funções de Ação (Firestore)
 async function alterarStatus(docId, novoStatus) {
-    if (typeof db === 'undefined') return;
+    if (typeof db === 'undefined' || !auth.currentUser) return;
     try {
         await db.collection(PEDIDOS_COLLECTION).doc(docId).update({ status: novoStatus });
         renderizarPedidos();
     } catch (e) {
-        console.error("Erro ao alterar status do pedido:", e);
+        console.error("Erro ao alterar status do pedido. O ID do documento pode estar incorreto ou permissão negada:", e);
     }
 }
 
 async function excluirPedido(docId) {
-    if (typeof db === 'undefined') return;
+    if (typeof db === 'undefined' || !auth.currentUser) return;
     if (confirm("Tem certeza que deseja excluir este pedido permanentemente?")) {
         try {
             await db.collection(PEDIDOS_COLLECTION).doc(docId).delete();
             renderizarPedidos();
         } catch (e) {
-            console.error("Erro ao excluir pedido:", e);
+            console.error("Erro ao excluir pedido. O ID do documento pode estar incorreto ou permissão negada:", e);
         }
     }
 }
 
 async function excluirCliente(docId) {
-    if (typeof db === 'undefined') return;
+    if (typeof db === 'undefined' || !auth.currentUser) return;
     if (confirm("Tem certeza que deseja excluir este cadastro de cliente permanentemente?")) {
         try {
             await db.collection(CLIENTES_COLLECTION).doc(docId).delete();
             renderizarClientes();
         } catch (e) {
-            console.error("Erro ao excluir cliente:", e);
+            console.error("Erro ao excluir cliente. O ID do documento pode estar incorreto ou permissão negada:", e);
         }
     }
 }
@@ -286,7 +345,14 @@ function handleDeleteClient(e) {
 
 // Inicializa o Dashboard
 document.addEventListener('DOMContentLoaded', () => {
-    // Renderiza Pedidos E Clientes
-    renderizarPedidos();
-    renderizarClientes();
+    // Escuta mudanças no estado de autenticação
+    auth.onAuthStateChanged(user => {
+        updateUI(user);
+    });
+    
+    // Configura listeners para a tela de login
+    const btnLogin = document.getElementById('btnLogin');
+    const btnLogout = document.getElementById('btnLogout');
+    if (btnLogin) btnLogin.addEventListener('click', signInAdmin);
+    if (btnLogout) btnLogout.addEventListener('click', signOutAdmin);
 });
