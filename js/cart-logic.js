@@ -48,36 +48,42 @@ async function salvarCliente(cliente) {
                 nome: cliente.nome,
                 regiao: cliente.regiao,
                 detalhesEndereco: cliente.detalhesEndereco,
-                telefoneLimpo: telefoneLimpo, // CRÍTICO: Garante que o campo de busca seja atualizado/mantido
+                telefoneLimpo: telefoneLimpo, 
                 dataAtualizacao: firebase.firestore.FieldValue.serverTimestamp()
             });
+            console.log("Cliente existente atualizado:", docId);
         } else {
             // Cliente não encontrado: Cria um novo registro (Create)
-            await clientesRef.add({
+            const docRef = await clientesRef.add({
                 ...cliente,
                 telefoneLimpo: telefoneLimpo,
                 dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
             });
+            console.log("Novo cliente criado:", docRef.id);
         }
     } catch (e) {
-        console.error("Erro ao salvar cliente no Firestore:", e);
-        mostrarNotificacao('Erro ao salvar cadastro do cliente na nuvem.', 'danger');
+        console.error("Erro ao salvar cliente no Firestore. Possível erro de Permissão:", e);
+        mostrarNotificacao('Erro ao salvar cadastro do cliente na nuvem. (Verifique as Regras do Firebase)', 'danger');
     }
 }
 
 async function carregarCliente(telefone) {
     const telefoneLimpo = telefone.replace(/\D/g, '');
+    if (telefoneLimpo.length !== 11) return null; // Não tenta buscar se o telefone for inválido
+    
     try {
         const clientesRef = db.collection(CLIENTES_COLLECTION);
         // Busca o cliente pelo telefone limpo
         const snapshot = await clientesRef.where('telefoneLimpo', '==', telefoneLimpo).limit(1).get();
 
         if (!snapshot.empty) {
+            console.log("Cliente encontrado no Firestore.");
             return snapshot.docs[0].data();
         }
         return null;
     } catch (e) {
-        console.error("Erro ao buscar cliente no Firestore:", e);
+        console.error("Erro ao buscar cliente no Firestore. Possível erro de Permissão:", e);
+        // Se houver Permission Denied, retorna null e o autofill não ocorre
         return null;
     }
 }
@@ -137,6 +143,7 @@ async function salvarPedidoAdmin() {
           ...pedido,
           dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
       });
+      console.log("Pedido salvo com sucesso!");
   } catch(e) {
       console.error("Erro ao salvar pedido no Firestore:", e);
       mostrarNotificacao('Erro ao finalizar pedido na nuvem.', 'danger');
@@ -404,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Configurar botão de oferta principal
   const btnAddHero = document.querySelector('.btn-add-hero');
   if (btnAddHero) {
-    btn.addEventListener('click', () => {
+    btnAddHero.addEventListener('click', () => { // Mudança para btnAddHero
       const nome = document.querySelector('.hero-titulo').textContent;
       const precoTexto = document.querySelector('.hero-preco').textContent;
       const preco = extrairPreco(precoTexto);
@@ -487,7 +494,8 @@ window.attachFinalizeHandler = function() {
           regiao: document.getElementById('regiaoCliente').value,
           detalhesEndereco: document.getElementById('detalhesEndereco').value,
       };
-      await salvarCliente(novoCadastro);
+      // Esta chamada deve funcionar após a correção das Regras de Segurança
+      await salvarCliente(novoCadastro); 
 
       // 3. Salva o pedido na Nuvem
       await salvarPedidoAdmin(); 
@@ -537,6 +545,7 @@ window.attachFinalizeHandler = function() {
       
       // Lógica de Autofill (busca na Nuvem)
       if (value.length === 11 && /^(91)9\d{8}$/.test(value)) {
+          // Esta chamada deve funcionar após a correção das Regras de Segurança
           const cliente = await carregarCliente(value);
           if (cliente) {
               preencherFormulario(cliente);

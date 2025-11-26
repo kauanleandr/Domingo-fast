@@ -112,7 +112,8 @@ async function renderizarPedidos() {
     try {
         const snapshot = await db.collection(PEDIDOS_COLLECTION).orderBy('id', 'desc').get();
         snapshot.forEach(doc => {
-            pedidos.push({ docId: doc.id, ...doc.data() });
+            // CORREÇÃO: Passa o doc.id (ID do Firestore) como 'docId'
+            pedidos.push({ docId: doc.id, ...doc.data() }); 
         });
     } catch(e) {
         console.error("ERRO: Falha ao carregar pedidos do Firestore.", e);
@@ -155,6 +156,7 @@ async function renderizarClientes() {
     try {
         const snapshot = await db.collection(CLIENTES_COLLECTION).get();
         snapshot.forEach(doc => {
+            // CORREÇÃO: Passa o doc.id (ID do Firestore) como 'docId'
             clientes.push({ docId: doc.id, ...doc.data() });
         });
     } catch(e) {
