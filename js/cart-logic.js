@@ -312,55 +312,7 @@ function mostrarNotificacao(mensagem, tipo = 'info') {
   }, 800);
 }
 
-// Função para gerar mensagem do WhatsApp
-function gerarMensagemWhatsApp() {
-  const nome = document.getElementById('nomeCliente').value;
-  const telefone = document.getElementById('telefoneCliente').value;
-  const regiao = document.getElementById('regiaoCliente').value;
-  const detalhesEndereco = document.getElementById('detalhesEndereco').value;
-  const formaPagamento = document.getElementById('formaPagamento').value;
-  const valorTroco = document.getElementById('valorTroco').value;
-
-  // Combina Região e Detalhes
-  const enderecoCompleto = `${regiao} - ${detalhesEndereco}`;
-
-  let mensagem = `🍔 *PEDIDO - Domingo FAST* 🍔\n\n`;
-  mensagem += `👤 *Cliente:* ${nome}\n`;
-  mensagem += `📱 *Telefone:* ${telefone}\n`;
-  mensagem += `📍 *Endereço:* ${enderecoCompleto}\n\n`;
-  
-  mensagem += `🛍️ *ITENS DO PEDIDO:*\n`;
-  let total = 0;
-  
-  window.carrinho.forEach(item => {
-    const subtotal = item.preco * item.quantidade;
-    mensagem += `• ${item.quantidade}x ${item.nome} - R$ ${formatarPreco(subtotal)}\n`;
-    total += subtotal;
-  });
-  
-  mensagem += `\n💰 *TOTAL: R$ ${formatarPreco(total)}*\n`;
-  mensagem += `🛵 *Frete:* Grátis (Sem taxa de entrega) 🎁\n\n`; 
-  
-  mensagem += `💳 *Forma de pagamento:* `;
-  switch(formaPagamento) {
-    case 'pix':
-      mensagem += `PIX\n\n🔑 *Chave PIX:* (91) 9 8165-4787\n📱 *Nome:* Domingo Fast`;
-      break;
-    case 'dinheiro':
-      mensagem += `Dinheiro`;
-      if (valorTroco) {
-        mensagem += ` (Troco para R$ ${valorTroco})`;
-      }
-      break;
-    case 'cartao':
-      mensagem += `Cartão (na entrega)`;
-      break;
-  }
-  
-  mensagem += `\n\n✅ Pedido confirmado! Aguarde nosso contato para confirmar o tempo de entrega.`;
-  
-  return encodeURIComponent(mensagem);
-}
+// REMOVIDA A FUNÇÃO gerarMensagemWhatsApp()
 
 // Validar formulário
 function validarFormulario() {
@@ -500,13 +452,8 @@ window.attachFinalizeHandler = function() {
       // 3. Salva o pedido na Nuvem
       await salvarPedidoAdmin(); 
       
-      const mensagem = gerarMensagemWhatsApp();
-      const numeroWhatsApp = '5591981654787';
-      const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${mensagem}`;
-      
-      // Abrir WhatsApp
-      window.open(urlWhatsApp, '_blank');
-      
+      // REMOVIDA A LÓGICA DE GERAÇÃO E REDIRECIONAMENTO DO WHATSAPP
+
       // Limpar carrinho após envio
       setTimeout(() => {
         window.carrinho = [];
@@ -520,7 +467,8 @@ window.attachFinalizeHandler = function() {
         formCliente.style.display = 'none';
         botoesCarrinho.style.display = 'block';
         
-        mostrarNotificacao('Pedido enviado! Aguarde nosso contato.', 'success');
+        // MENSAGEM ATUALIZADA
+        mostrarNotificacao('Pedido salvo com sucesso! Aguarde a confirmação de contato.', 'success');
       }, 1000);
     });
   }
