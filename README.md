@@ -23,14 +23,18 @@ acesse o site em: https://domingofast.netlify.app/
 - **Facilidade de Contato e Localização** 📍: Informações rápidas para entrar em contato ou localizar o estabelecimento.
 - **Interface Amigável e Responsiva** 📱💻: O site é adaptado para celulares e computadores, oferecendo uma navegação simples e eficiente.
 - **Adicionar Produtos ao Pedido** 🛒: O usuário pode adicionar itens ao seu pedido de maneira fácil.
+- **Persistência de Pedidos e Clientes (Firestore)** 💾: Os dados de pedidos (com itens, total e pagamento) e os cadastros de clientes (nome, telefone, endereço) são salvos em tempo real na nuvem.
+- **Painel Administrador Funcional** 🔧: Interface de login com proteção de rota, que permite ao administrador visualizar, gerenciar status (PENDENTE, CAMINHO, CONCLUÍDO) e excluir pedidos e cadastros de clientes.
+- **Autofill de Cliente** 👥: Ao digitar o telefone, os dados do cliente (nome, região, endereço) são carregados automaticamente se já estiver cadastrado.
+- **Múltiplas Formas de Pagamento** 💳: O cliente pode escolher entre PIX, Dinheiro (com campo de troco opcional) e Cartão (na entrega).
 
 ---
 
 ## Funcionalidades Futuras 🔜
 
-- **Usuário Administrador** 🔧: Acesso a uma interface onde será possível visualizar os pedidos feitos, com detalhes como nome, localização e número de telefone do cliente.
-- **Usuário Consumidor** 👥: O cadastro será feito por meio do número de celular, nome, localização e senha. Caso o usuário não esteja na área de entrega, ele será avisado.
-- **Forma de Pagamento – PIX 💳**: O pagamento será feito via PIX. Após finalizar o pedido, o cliente será redirecionado para o WhatsApp com um prompt contendo seu nome, endereço, pedido, preço final e chave PIX. Após o pagamento e envio do comprovante, o cliente receberá uma mensagem informando o tempo de entrega do pedido.
+- **Integração Completa com WhatsApp** 💬: Gerar o link de pedido final para o WhatsApp com o resumo do pedido e chave PIX para facilitar o pagamento e envio de comprovante. (O envio de aviso "A Caminho" para o cliente já está implementado no Admin).
+- **Validação de Área de Entrega** 📍: Implementar lógica para verificar a região informada pelo cliente e alertá-lo caso esteja fora da área de entrega.
+- **Controle de Estoque/Disponibilidade** 📦: Adicionar um sistema para marcar produtos como esgotados.
 
 ---
 
